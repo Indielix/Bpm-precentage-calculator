@@ -1,90 +1,181 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./App.css";
-
+import { afschijvingsMatrix } from "./utils/matrix";
 function App() {
-  const [value1, setValue1] = useState("");
-  const [value2, setValue2] = useState(31);
-  const [value3, setValue3] = useState("");
-  const [value4, setValue4] = useState("");
-
+  const [value1, setValue1] = useState(""); // Schadebedrag
+  const [deductible, setDeductible] = useState(""); // New field: Deductible
+  const [value2, setValue2] = useState(31); // Percentage
+  const [value3, setValue3] = useState(""); // 31% uitkomst
+  const [value4, setValue4] = useState(""); // Afschijvingspercentage
+  const [adjustedSchadebedrag, setAdjustedSchadebedrag] = useState(""); // Adjusted Schadebedrag for calculations
+  const [purchaseDate, setPurchaseDate] = useState("");
+  const [purchasePrice, setPurchasePrice] = useState("");
   // Update value1 and reset value3 and value5 when value1 changes
   const handleValue1Change = (e) => {
-    const newValue1 = e.target.value;
-    setValue1(newValue1);
-    if (value2) {
-      const newValue3 = (parseFloat(newValue1) * parseFloat(value2)) / 100;
-      setValue3(newValue3.toString());
-    }
+    setValue1(e.target.value);
+  };
+
+  // Handle change for Deductible field and recalculate adjusted Schadebedrag
+  const handleDeductibleChange = (e) => {
+    const newDeductible = e.target.value;
+    setDeductible(newDeductible);
   };
 
   // Update value2 and recalculate value3 when value2 changes
   const handleValue2Change = (e) => {
-    const newValue2 = e.target.value;
-    setValue2(newValue2);
-    if (value1) {
-      const newValue3 = (parseFloat(value1) * parseFloat(newValue2)) / 100;
-      setValue3(newValue3.toString());
-    }
+    setValue2(e.target.value);
   };
 
   // Update value4 when value4 changes
   const handleValue4Change = (e) => {
-    const newValue4 = e.target.value;
-    setValue4(newValue4);
+    setValue4(e.target.value);
   };
 
-  // Calculate value5 based on the values of value1, value2, and value4
-  const calculateValue5 = () => {
-    if (value1 && value2 && value4) {
-      return (
-        (parseFloat(value1) * (parseFloat(value4) - parseFloat(value2))) / 100
+  // Use useEffect to update adjustedSchadebedrag and related calculations whenever value1 or deductible changes
+  useEffect(() => {
+    const calcAdjustedSchadebedrag = value1 - deductible;
+    setAdjustedSchadebedrag(calcAdjustedSchadebedrag);
+
+    // Recalculate value3 with adjusted Schadebedrag
+    if (calcAdjustedSchadebedrag && value2) {
+      setValue3(
+        ((calcAdjustedSchadebedrag * parseFloat(value2)) / 100).toString()
       );
+    }
+  }, [value1, deductible, value2]);
+
+  // Calculate value5 based on the values of adjustedSchadebedrag, value2, and value4
+  const calculateValue5 = () => {
+    if (adjustedSchadebedrag && value2 && value4) {
+      return (
+        (parseFloat(adjustedSchadebedrag) *
+          (parseFloat(value4) - parseFloat(value2))) /
+        100
+      ).toString();
     }
     return "";
   };
+
+  // New handler functions for the date and price input fields
+  const handlePurchaseDateChange = (e) => {
+    setPurchaseDate(e.target.value);
+  };
+
+  const handlePurchasePriceChange = (e) => {
+    setPurchasePrice(e.target.value);
+  };
+
+  // Function to calculate the number of months since the purchase date
+  const calculateMonthsSincePurchase = (purchaseDate) => {
+    const purchaseDateTime = new Date(purchaseDate).getTime();
+    const currentTime = Date.now();
+    const months = Math.floor(
+      (currentTime - purchaseDateTime) / (1000 * 60 * 60 * 24 * 30)
+    );
+    return months;
+  };
+
+  // Function to find the corresponding percentage based on price and months
+  const lookupPercentage = (price, months) => {
+    // Find the correct price range
+    const priceRange = afschijvingsMatrix.find(
+      (range) => price >= range.minPrice && price < range.maxPrice
+    );
+
+    if (!priceRange) return "";
+
+    // Calculate index based on the month (assumes that the matrix column increments are in 12 months step)
+    const index = Math.min(
+      Math.floor(months / 12),
+      priceRange.percentages.length - 1
+    );
+
+    // Return the corresponding percentage
+    return priceRange.percentages[index];
+  };
+
+  // Use useEffect to update value4 (Afschijvingspercentage) when purchaseDate or purchasePrice changes
+  useEffect(() => {
+    const monthsSincePurchase = calculateMonthsSincePurchase(purchaseDate);
+    // Lookup the corresponding Afschijvingspercentage from the matrix based on price and months
+    const afschijvingspercentage = lookupPercentage(
+      purchasePrice,
+      monthsSincePurchase
+    );
+    setValue4(afschijvingspercentage);
+  }, [purchaseDate, purchasePrice]);
 
   // Derived state for value5
   const value5 = calculateValue5();
 
   return (
-    <main className="flex justify-center items-center flex-col min-h-screen bg-slate-50 p-4 ">
-      <div className="md:w-1/3 w-full flex flex-col">
-        <span>Schadebedrag</span>
-        <input
-          type="text"
-          value={value1}
-          onChange={handleValue1Change}
-          className="p-2 border border-gray-300 rounded-md mb-6 w-100"
-        />
-        <span>Percentage</span>
-        <input
-          type="text"
-          value={value2}
-          onChange={handleValue2Change}
-          className="p-2 border border-gray-300 rounded-md mb-6"
-        />
-        <span>31% uitkomst</span>
-        <input
-          disabled
-          type="text"
-          value={value3}
-          onChange={(e) => setValue3(e.target.value)}
-          className="p-2 border border-gray-300 rounded-md mb-6"
-        />
-        <span>Afschijvingspercentage</span>
-        <input
-          type="text"
-          value={value4}
-          onChange={handleValue4Change}
-          className="p-2 border border-gray-300 rounded-md mb-6"
-        />
-        <span>Afschrijvings uitkomst</span>
-        <input
-          disabled
-          type="text"
-          value={value5.toString()}
-          className="p-2 border border-gray-300 rounded-md mb-6"
-        />
+    <main className="flex justify-center items-center min-h-screen bg-slate-50 p-4">
+      <div className="w-full max-w-4xl flex flex-row">
+        <div className="w-2/3 flex flex-col pr-4">
+          {" "}
+          {/* Use 2/3 of the parent width */}
+          <span>Schadebedrag</span>
+          <input
+            type="text"
+            value={value1}
+            onChange={handleValue1Change}
+            className="p-2 border border-gray-300 rounded-md mb-6 w-100"
+          />
+          <span>Gebruikersschade</span>
+          <input
+            type="text"
+            value={deductible}
+            onChange={handleDeductibleChange}
+            className="p-2 border border-gray-300 rounded-md mb-6"
+          />
+          <span>Percentage</span>
+          <input
+            type="text"
+            value={value2}
+            onChange={handleValue2Change}
+            className="p-2 border border-gray-300 rounded-md mb-6"
+          />
+          <span>31% uitkomst</span>
+          <input
+            disabled
+            type="text"
+            value={value3}
+            onChange={(e) => setValue3(e.target.value)}
+            className="p-2 border border-gray-300 rounded-md mb-6"
+          />
+          <span>Afschijvingspercentage</span>
+          <input
+            type="text"
+            value={value4}
+            onChange={handleValue4Change}
+            className="p-2 border border-gray-300 rounded-md mb-6"
+          />
+          <span>Afschrijvings uitkomst</span>
+          <input
+            disabled
+            type="text"
+            value={value5.toString()}
+            className="p-2 border border-gray-300 rounded-md mb-6"
+          />
+        </div>
+        <div className="w-1/3 flex flex-col pl-4 border-l border-gray-300">
+          {" "}
+          {/* Use 1/3 of the parent width and add a left border */}
+          <span>Date of Purchase</span>
+          <input
+            type="date"
+            value={purchaseDate}
+            onChange={handlePurchaseDateChange}
+            className="p-2 border border-gray-300 rounded-md mb-6"
+          />
+          <span>Purchase Price</span>
+          <input
+            type="number"
+            value={purchasePrice}
+            onChange={handlePurchasePriceChange}
+            className="p-2 border border-gray-300 rounded-md mb-6"
+          />
+        </div>
       </div>
     </main>
   );
