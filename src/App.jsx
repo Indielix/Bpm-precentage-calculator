@@ -10,6 +10,12 @@ function App() {
   const [adjustedSchadebedrag, setAdjustedSchadebedrag] = useState(""); // Adjusted Schadebedrag for calculations
   const [purchaseDate, setPurchaseDate] = useState("");
   const [purchasePrice, setPurchasePrice] = useState("");
+  const [kmCorrection, setKmCorrection] = useState(0); // New state for KM Correctie
+
+  // Handler function for KM Correctie input field
+  const handleKmCorrectionChange = (e) => {
+    setKmCorrection(e.target.value);
+  };
   // Update value1 and reset value3 and value5 when value1 changes
   const handleValue1Change = (e) => {
     setValue1(e.target.value);
@@ -44,14 +50,15 @@ function App() {
     }
   }, [value1, deductible, value2]);
 
-  // Calculate value5 based on the values of adjustedSchadebedrag, value2, and value4
+  // Update the calculateValue5 function to add kmCorrection to the final result
   const calculateValue5 = () => {
     if (adjustedSchadebedrag && value2 && value4) {
-      return (
+      const resultWithoutCorrection =
         (parseFloat(adjustedSchadebedrag) *
           (parseFloat(value4) - parseFloat(value2))) /
-        100
-      ).toString();
+        100;
+      // Parse kmCorrection as a float and add it to the result
+      return (resultWithoutCorrection + parseFloat(kmCorrection)).toString();
     }
     return "";
   };
@@ -150,6 +157,13 @@ function App() {
             onChange={handleValue4Change}
             className="p-2 border border-gray-300 rounded-md mb-6"
           />
+          <span>KM Correctie</span>
+          <input
+            type="number"
+            value={kmCorrection}
+            onChange={handleKmCorrectionChange}
+            className="p-2 border border-gray-300 rounded-md mb-6"
+          />
           <span>Afschrijvings uitkomst</span>
           <input
             disabled
@@ -160,15 +174,14 @@ function App() {
         </div>
         <div className="w-1/3 flex flex-col pl-4 border-l border-gray-300">
           {" "}
-          {/* Use 1/3 of the parent width and add a left border */}
-          <span>Date of Purchase</span>
+          <span>Datum eerste toelating</span>
           <input
             type="date"
             value={purchaseDate}
             onChange={handlePurchaseDateChange}
             className="p-2 border border-gray-300 rounded-md mb-6"
           />
-          <span>Purchase Price</span>
+          <span>Prijs incl. Opties</span>
           <input
             type="number"
             value={purchasePrice}
