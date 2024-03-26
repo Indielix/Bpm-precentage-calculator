@@ -1,4 +1,4 @@
-# React & Tailwind CSS Starter Pack
+# BPM Calculator App
 
 This is an internal tool for BPM
 
