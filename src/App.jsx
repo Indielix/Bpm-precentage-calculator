@@ -135,6 +135,14 @@ function App() {
             onChange={handleDeductibleChange}
             className="p-2 border border-gray-300 rounded-md mb-6"
           />
+          <span>Difference</span>
+          <input
+            disabled
+            type="text"
+            value={value1 - deductible}
+            onChange={handleDeductibleChange}
+            className="p-2 border border-gray-300 rounded-md mb-6"
+          />
           <span>Percentage</span>
           <input
             type="text"
